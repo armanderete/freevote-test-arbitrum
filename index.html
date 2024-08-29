@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Vote Arbitrum</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+</head>
+<body>
+    <h1>Free Vote on Arbitrum</h1>
+    <button id="freeVoteButton">Free Vote Arbitrum</button>
+
+    <script>
+        // Replace MetaMask's provider with Alchemy's WebSocket provider
+        const alchemyProvider = new ethers.providers.WebSocketProvider(
+            `wss://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`
+        );
+
+        let signer;
+        let contract;
+
+        async function init() {
+            // Request account access if needed
+            await alchemyProvider.send("eth_requestAccounts", []);
+
+            signer = alchemyProvider.getSigner();
+
+            // Switch to Arbitrum network (42161) in MetaMask if not already done
+            await alchemyProvider.send("wallet_switchEthereumChain", [{ chainId: '0xA4B1' }]);
+
+            // Fetch the ABI and initialize the contract
+            const response = await fetch('./abi.json');
+            const abi = await response.json();
+            const contractAddress = "0xFc03A774c33435F9E56AE278a5a91677A918A266";
+            contract = new ethers.Contract(contractAddress, abi, signer);
+        }
+
+        document.getElementById("freeVoteButton").onclick = async () => {
+            try {
+                // Fetch the current gas price
+                const gasPrice = await alchemyProvider.getGasPrice();
+
+                // Trigger the freeVote function
+                const tx = await contract.freeVote(
+                    10000,                       // _amount
+                    "freevote",                  // _tag
+                    "freevote test digitalocean", // _concept
+                    {
+                        gasPrice: gasPrice,  // Use the fetched gas price
+                        gasLimit: ethers.utils.hexlify(100000),  // Estimate gas limit, can adjust as needed
+                    }
+                );
+
+                console.log("Transaction Hash:", tx.hash);
+                alert(`Transaction sent! Hash: ${tx.hash}`);
+            } catch (error) {
+                console.error("Error during transaction:", error);
+                alert("An error occurred: " + error.message);
+            }
+        };
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
