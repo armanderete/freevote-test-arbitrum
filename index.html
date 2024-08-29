@@ -11,7 +11,10 @@
     <button id="freeVoteButton">Free Vote Arbitrum</button>
 
     <script>
-        // Use the Alchemy WebSocket provider with your API key embedded
+        // Use MetaMask's provider for account management
+        const metamaskProvider = new ethers.providers.Web3Provider(window.ethereum);
+
+        // Use the Alchemy WebSocket provider for interacting with the blockchain
         const alchemyProvider = new ethers.providers.WebSocketProvider(
             `wss://arb-mainnet.g.alchemy.com/v2/S7NE7btEnvm5v14cGJksxVTcKIXyWh5C`
         );
@@ -20,15 +23,15 @@
         let contract;
 
         async function init() {
-            // Request account access if needed
-            await alchemyProvider.send("eth_requestAccounts", []);
+            // Request account access using MetaMask's provider
+            await metamaskProvider.send("eth_requestAccounts", []);
 
-            signer = alchemyProvider.getSigner();
+            signer = metamaskProvider.getSigner();
 
             // Switch to Arbitrum network (42161) in MetaMask if not already done
-            await alchemyProvider.send("wallet_switchEthereumChain", [{ chainId: '0xA4B1' }]);
+            await metamaskProvider.send("wallet_switchEthereumChain", [{ chainId: '0xA4B1' }]);
 
-            // Fetch the ABI and initialize the contract
+            // Fetch the ABI and initialize the contract using Alchemy's provider
             const response = await fetch('./abi.json');
             const abi = await response.json();
             const contractAddress = "0xFc03A774c33435F9E56AE278a5a91677A918A266";
@@ -37,7 +40,7 @@
 
         document.getElementById("freeVoteButton").onclick = async () => {
             try {
-                // Fetch the current gas price
+                // Fetch the current gas price using Alchemy's provider
                 const gasPrice = await alchemyProvider.getGasPrice();
 
                 // Trigger the freeVote function
